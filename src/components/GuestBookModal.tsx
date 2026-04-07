@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, CheckCircle2, MessageSquareHeart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface GuestBookModalProps {
   isOpen: boolean;
@@ -28,11 +29,8 @@ export default function GuestBookModal({ isOpen, onClose }: GuestBookModalProps)
       setTimeout(() => {
         onClose();
         setSubmitSuccess(false);
-        setFormData({
-          guest_name: '',
-          message: '',
-        });
-      }, 2000);
+        setFormData({ guest_name: '', message: '' });
+      }, 2500); // Başarı mesajını okumaları için bekleme süresi
     } catch (error) {
       console.error('Error submitting message:', error);
       alert('Bir hata oluştu. Lütfen tekrar deneyin.');
@@ -41,72 +39,107 @@ export default function GuestBookModal({ isOpen, onClose }: GuestBookModalProps)
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-md bg-neutral-900 rounded-2xl border border-neutral-800">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors"
-        >
-          <X size={24} />
-        </button>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Arka Plan Blur Efekti */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+          />
 
-        <div className="p-8">
-          <h2 className="text-2xl font-serif text-rose-300 mb-6 text-center">
-            Anı Bırak
-          </h2>
+          {/* Modal İçeriği */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-full max-w-lg bg-neutral-900/90 backdrop-blur-xl rounded-3xl border border-neutral-800/60 p-8 shadow-2xl shadow-black"
+          >
+            <button
+              onClick={onClose}
+              className="absolute top-6 right-6 text-neutral-500 hover:text-white hover:bg-neutral-800 p-2 rounded-full transition-all duration-300"
+            >
+              <X size={20} />
+            </button>
 
-          {submitSuccess ? (
-            <div className="text-center py-8">
-              <p className="text-rose-300 text-lg mb-2">Teşekkürler!</p>
-              <p className="text-neutral-400">Mesajınız kaydedildi.</p>
+            <div className="pt-2">
+              <div className="flex justify-center mb-4">
+                <MessageSquareHeart className="text-rose-400/80" strokeWidth={1.5} size={36} />
+              </div>
+              <h2 className="text-3xl font-serif text-white mb-2 text-center font-light">
+                Anı Defteri
+              </h2>
+              <p className="text-center text-neutral-400 font-light text-sm mb-8">
+                Bu özel günümüz için güzel dileklerinizi paylaşın
+              </p>
+
+              <AnimatePresence mode="wait">
+                {submitSuccess ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center justify-center py-8 text-center"
+                  >
+                    <CheckCircle2 className="text-rose-400 w-16 h-16 mb-4" strokeWidth={1} />
+                    <p className="text-xl text-white font-serif mb-2">Çok Teşekkür Ederiz!</p>
+                    <p className="text-neutral-400 font-light">Güzel dilekleriniz anı defterimize eklendi.</p>
+                  </motion.div>
+                ) : (
+                  <motion.form 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onSubmit={handleSubmit} 
+                    className="space-y-6"
+                  >
+                    <div>
+                      <label className="block text-neutral-300 text-sm mb-2 font-light tracking-wide">
+                        Adınız Soyadınız *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.guest_name}
+                        onChange={(e) => setFormData({ ...formData, guest_name: e.target.value })}
+                        className="w-full bg-neutral-950/50 border border-neutral-800 rounded-xl px-4 py-3.5 text-neutral-200 focus:outline-none focus:border-rose-400/50 focus:ring-1 focus:ring-rose-400/50 transition-all duration-300"
+                        placeholder="Örn: Volkan Durgut"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-neutral-300 text-sm mb-2 font-light tracking-wide">
+                        Mesajınız *
+                      </label>
+                      <textarea
+                        required
+                        rows={4}
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className="w-full bg-neutral-950/50 border border-neutral-800 rounded-xl px-4 py-3.5 text-neutral-200 focus:outline-none focus:border-rose-400/50 focus:ring-1 focus:ring-rose-400/50 transition-all duration-300 resize-none"
+                        placeholder="Emir ve Sude'ye iletmek istediğiniz not..."
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-transparent border border-rose-400/50 text-rose-300 py-4 rounded-xl font-medium tracking-wide hover:bg-rose-400 hover:text-neutral-950 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                    >
+                      {isSubmitting ? 'KAYDEDİLİYOR...' : 'ANIYI BIRAK'}
+                    </button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-neutral-300 text-sm mb-2">
-                  Adınız Soyadınız *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.guest_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, guest_name: e.target.value })
-                  }
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-400 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-neutral-300 text-sm mb-2">
-                  Mesajınız *
-                </label>
-                <textarea
-                  required
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  rows={5}
-                  placeholder="Düşüncelerinizi, dileklerinizi veya güzel anılarınızı bizimle paylaşın..."
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-400 transition-colors resize-none placeholder:text-neutral-600"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-white text-neutral-900 py-3 rounded-lg font-medium hover:bg-neutral-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Gönderiliyor...' : 'Gönder'}
-              </button>
-            </form>
-          )}
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
