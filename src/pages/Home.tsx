@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence, useMotionValueEvent } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence, useMotionValueEvent, MotionValue } from 'framer-motion';
 
 import CountdownTimer from '../components/CountdownTimer';
 import GuestBookModal from '../components/GuestBookModal';
@@ -23,6 +23,44 @@ const GALLERY_IMAGES = [
   "/10.jpeg"
 ];
 
+// YENİ: Her bir tam ekran galeri karesi için özel bileşen (Hook kurallarını korumak için)
+interface GallerySlideProps {
+  src: string;
+  index: number;
+  total: number;
+  scrollProgress: MotionValue<number>;
+}
+
+const GallerySlide = ({ src, index, total, scrollProgress }: GallerySlideProps) => {
+  const start = index / total;
+  const end = (index + 1) / total;
+
+  const opacity = useTransform(
+    scrollProgress,
+    [start - 0.05, start, end - 0.05, end],
+    [0, 1, 1, 0]
+  );
+  
+  const scale = useTransform(
+    scrollProgress,
+    [start, end], 
+    [1.05, 1]
+  );
+
+  return (
+    <motion.div style={{ opacity }} className="absolute inset-0">
+      <motion.img 
+        src={src} 
+        alt={`Anı ${index + 1}`}
+        style={{ scale }}
+        loading={index === 0 ? 'eager' : 'lazy'}
+        className="w-full h-full object-cover" 
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-950/60" />
+    </motion.div>
+  );
+};
+
 export default function Home() {
   const [isRSVPOpen, setIsRSVPOpen] = useState(false);
   const [isGuestBookOpen, setIsGuestBookOpen] = useState(false);
@@ -39,18 +77,14 @@ export default function Home() {
     offset: ["start end", "end start"]
   });
 
+  // GÜNCELLENDİ: Yeni tam ekran mantığına uygun aktif kart hesaplaması
   useMotionValueEvent(galleryScroll, "change", (latest) => {
-    const active = Math.min(GALLERY_IMAGES.length, Math.max(1, Math.ceil(latest * GALLERY_IMAGES.length)));
+    const active = Math.min(
+      GALLERY_IMAGES.length,
+      Math.max(1, Math.ceil(latest * GALLERY_IMAGES.length))
+    );
     setActiveCard(active);
   });
-
-  const stripX = useTransform(
-    galleryScroll,
-    [0, 1],
-    ["0%", `-${(GALLERY_IMAGES.length - 1) * 22}vw`]
-  );
-
-  const heights = ['70vh', '55vh', '75vh', '60vh', '65vh', '50vh', '72vh', '58vh'];
 
   const fadeInUp = { hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } } };
   const scaleIn = { hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -147,7 +181,6 @@ export default function Home() {
         </div>
 
         <div className="max-w-6xl mx-auto px-6 w-full">
-          {/* Program Kartları: Düğün, Tarih, Konum olarak 3'e düşürüldü */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {[
               { label: 'DÜĞÜN', time: '19:00', icon: '◈' },
@@ -171,7 +204,6 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-6">
             <MagneticCard className="h-full overflow-hidden !p-0">
               <div className="relative h-72 w-full">
-                {/* GÜNCELLENDİ: Özel Embed (Yerleştirme) URL'si */}
                 <iframe
                   src="https://maps.google.com/maps?q=Tekiroba%20Düğün%20Salonu,%20Tekirdağ&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   width="100%" 
@@ -186,7 +218,6 @@ export default function Home() {
               <div className="p-6">
                 <p className="text-rose-300 font-mono text-xs tracking-[0.2em] uppercase mb-1">Tekiroba Düğün & Davet Salonu</p>
                 <p className="text-neutral-400 font-light text-sm mb-4">Altınova, Bülbüllü Sk No:10, 59100 Süleymanpaşa/Tekirdağ</p>
-                {/* GÜNCELLENDİ: Yol Tarifi için doğrudan Google Maps Arama URL'si */}
                 <a
                   href="https://www.google.com/maps/search/?api=1&query=Tekiroba+Düğün+Salonu+Tekirdağ"
                   target="_blank"
@@ -211,34 +242,63 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. SCROLL-DRIVEN HORIZONTAL STRIP GALLERY */}
-      <section ref={galleryRef} className="relative h-[300vh] bg-neutral-950 w-full overflow-hidden">
-        <div className="sticky top-0 h-screen flex items-center overflow-hidden relative">
-          <p style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }} className="text-neutral-600 font-mono text-xs tracking-[0.5em] uppercase absolute left-6 top-1/2 -translate-y-1/2 z-20">
-            ANILAR
-          </p>
+      {/* 4. YENİ: FULLSCREEN SCROLL-SNAP GALERİ */}
+      <section
+        ref={galleryRef}
+        className="relative w-full"
+        style={{ height: `${GALLERY_IMAGES.length * 100}vh` }}
+      >
+        <div className="sticky top-0 h-screen overflow-hidden">
+          
+          {/* Her fotoğraf scroll progress'e göre fade ve scale geçişi yapar */}
+          {GALLERY_IMAGES.map((src, i) => (
+            <GallerySlide 
+              key={src} 
+              src={src} 
+              index={i} 
+              total={GALLERY_IMAGES.length} 
+              scrollProgress={galleryScroll} 
+            />
+          ))}
 
-          <div className="absolute right-6 md:right-12 bottom-12 z-20 flex items-center">
-            <span className="text-neutral-500 font-mono text-xs md:text-sm tracking-widest flex items-center bg-neutral-950/50 backdrop-blur-md px-4 py-2 rounded-full">
-              <AnimatePresence mode="popLayout">
-                <motion.span key={activeCard} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="inline-block text-rose-300 font-bold">
-                  {String(activeCard).padStart(2, '0')}
-                </motion.span>
-              </AnimatePresence>
-              <span className="whitespace-pre"> / {String(GALLERY_IMAGES.length).padStart(2, '0')}</span>
+          {/* Sayaç — sağ alt */}
+          <div className="absolute bottom-8 right-8 z-20 flex items-center gap-3">
+            <AnimatePresence mode="popLayout">
+              <motion.span
+                key={activeCard}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="text-white font-serif text-5xl font-light"
+              >
+                {String(activeCard).padStart(2, '0')}
+              </motion.span>
+            </AnimatePresence>
+            <span className="text-white/40 font-mono text-sm">
+              / {String(GALLERY_IMAGES.length).padStart(2, '0')}
             </span>
           </div>
 
-          <motion.div style={{ x: stripX }} className="flex items-center gap-6 md:gap-10 px-[15vw] absolute top-1/2 -translate-y-1/2 will-change-transform">
-            {GALLERY_IMAGES.map((src, i) => (
-              <motion.div key={src} style={{ height: heights[i % heights.length] }} className="relative shrink-0 w-[50vw] md:w-[18vw] min-w-[220px] rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/5">
-                <img src={src} alt={`Anı ${i+1}`} loading="lazy" decoding="async" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" />
-                <div className="absolute bottom-4 right-4 text-white/30 font-mono text-xs tracking-widest mix-blend-overlay">
-                  {String(i+1).padStart(2,'0')}
-                </div>
-              </motion.div>
+          {/* "ANILAR" dikey metin — sol */}
+          <p 
+            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-20 text-white/30 font-mono text-xs tracking-[0.5em] uppercase"
+          >
+            ANILAR
+          </p>
+
+          {/* Progress çubukları — alt orta */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+            {GALLERY_IMAGES.map((_, i) => (
+              <div
+                key={i}
+                className={`h-[2px] transition-all duration-500 rounded-full ${
+                  i + 1 === activeCard ? 'w-8 bg-white' : 'w-2 bg-white/30'
+                }`}
+              />
             ))}
-          </motion.div>
+          </div>
+
         </div>
       </section>
 
