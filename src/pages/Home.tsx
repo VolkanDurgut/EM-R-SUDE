@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 import CountdownTimer from '../components/CountdownTimer';
 import GuestBookModal from '../components/GuestBookModal';
@@ -23,63 +23,48 @@ const GALLERY_IMAGES = [
   "/10.jpeg"
 ];
 
-// Galeri slide: her fotoğraf kendi sticky section'ında, whileInView ile tetiklenir
-interface GallerySlideProps {
+// Galeri fotoğraf kartı — masonry grid için
+interface GalleryCardProps {
   src: string;
   index: number;
-  total: number;
+  onClick: (index: number) => void;
 }
 
-const GallerySlide = ({ src, index, total }: GallerySlideProps) => {
+const GalleryCard = ({ src, index, onClick }: GalleryCardProps) => {
   return (
-    <div className="relative h-screen sticky top-0 overflow-hidden">
-      {/* Fotoğraf — scale animasyonu scroll ile değil mount ile */}
-      <motion.img
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.7, delay: (index % 3) * 0.12, ease: [0.22, 1, 0.36, 1] }}
+      onClick={() => onClick(index)}
+      className="break-inside-avoid mb-3 cursor-pointer rounded-2xl overflow-hidden group relative"
+    >
+      <img
         src={src}
         alt={`Anı ${index + 1}`}
-        initial={{ scale: 1.12, opacity: 0 }}
-        whileInView={{ scale: 1.0, opacity: 1 }}
-        viewport={{ once: false, amount: 0.5 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-        loading="eager"
+        loading="lazy"
         decoding="async"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/30 via-transparent to-neutral-950/60 pointer-events-none" />
-      {/* Sağ alt: sayaç */}
-      <div className="absolute bottom-8 right-8 z-20 flex items-baseline gap-1.5">
-        <span className="text-white font-serif text-6xl md:text-8xl font-light leading-none drop-shadow-2xl">
+      <div className="absolute inset-0 bg-neutral-950/0 group-hover:bg-neutral-950/30 transition-all duration-400 flex items-center justify-center">
+        <span className="text-white text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-xl">
+          ◯
+        </span>
+      </div>
+      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <span className="text-white/70 font-mono text-[10px] tracking-widest bg-black/40 backdrop-blur-sm px-2 py-1 rounded">
           {String(index + 1).padStart(2, '0')}
         </span>
-        <span className="text-white/40 font-mono text-base mb-2">
-          /{String(total).padStart(2, '0')}
-        </span>
       </div>
-      {/* Alt orta: progress dots */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
-        {Array.from({ length: total }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-[2px] rounded-full transition-all duration-300 ${
-              i === index ? 'w-8 bg-white' : 'w-2 bg-white/30'
-            }`}
-          />
-        ))}
-      </div>
-      {/* Üst orta: ANI etiketi */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20">
-        <p className="text-white/50 font-mono text-xs tracking-[0.4em] uppercase drop-shadow-md">
-          ANI {String(index + 1).padStart(2, '0')}
-        </p>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 
 export default function Home() {
   const [isRSVPOpen, setIsRSVPOpen] = useState(false);
   const [isGuestBookOpen, setIsGuestBookOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   
   const { scrollY } = useScroll();
   const heroScale = useTransform(scrollY, [0, 800], [1.1, 1]); 
@@ -241,26 +226,112 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. FULLSCREEN STICKY GALERİ — her fotoğraf kendi sticky section'ında */}
-      <section className="relative w-full">
-        {/* Sol dikey ANILAR metni — tüm galeri boyunca sabit */}
-        <div className="sticky top-1/2 -translate-y-1/2 z-50 pointer-events-none" style={{ marginBottom: '-100vh' }}>
-          <p
-            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-            className="fixed left-6 top-1/2 -translate-y-1/2 text-white/30 font-mono text-xs tracking-[0.5em] uppercase"
-          >
-            ANILAR
-          </p>
+      {/* 4. MASONRY GALERİ + LIGHTBOX */}
+      <section className="py-24 px-4 md:px-8 bg-neutral-950">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <p className="text-rose-400/60 font-mono text-xs tracking-[0.4em] uppercase mb-3">Anılarımız</p>
+          <h2 className="text-3xl md:text-4xl font-serif text-white font-light">Birlikte</h2>
+          <div className="w-10 h-[1px] bg-rose-400/40 mx-auto mt-4" />
+        </motion.div>
+
+        {/* Masonry Grid */}
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-3 max-w-7xl mx-auto">
+          {GALLERY_IMAGES.map((src, i) => (
+            <GalleryCard
+              key={src}
+              src={src}
+              index={i}
+              onClick={setLightboxIndex}
+            />
+          ))}
         </div>
-        {GALLERY_IMAGES.map((src, i) => (
-          <GallerySlide
-            key={src}
-            src={src}
-            index={i}
-            total={GALLERY_IMAGES.length}
-          />
-        ))}
       </section>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIndex !== null && (
+          <motion.div
+            key="lightbox"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setLightboxIndex(null)}
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center"
+          >
+            {/* Fotoğraf */}
+            <motion.img
+              key={lightboxIndex}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              src={GALLERY_IMAGES[lightboxIndex]}
+              alt={`Anı ${lightboxIndex + 1}`}
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Kapat */}
+            <button
+              onClick={() => setLightboxIndex(null)}
+              className="absolute top-6 right-6 text-white/60 hover:text-white transition-colors text-3xl font-light leading-none"
+            >
+              ×
+            </button>
+
+            {/* Geri */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((prev) =>
+                  prev === null ? 0 : prev === 0 ? GALLERY_IMAGES.length - 1 : prev - 1
+                );
+              }}
+              className="absolute left-4 md:left-8 text-white/50 hover:text-white transition-colors text-5xl font-light leading-none"
+            >
+              ‹
+            </button>
+
+            {/* İleri */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex((prev) =>
+                  prev === null ? 0 : prev === GALLERY_IMAGES.length - 1 ? 0 : prev + 1
+                );
+              }}
+              className="absolute right-4 md:right-8 text-white/50 hover:text-white transition-colors text-5xl font-light leading-none"
+            >
+              ›
+            </button>
+
+            {/* Sayaç */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+              <p className="text-white/40 font-mono text-xs tracking-[0.3em]">
+                {String(lightboxIndex + 1).padStart(2, '0')} / {String(GALLERY_IMAGES.length).padStart(2, '0')}
+              </p>
+              <div className="flex gap-1.5">
+                {GALLERY_IMAGES.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
+                    className={`h-[2px] rounded-full transition-all duration-300 ${
+                      i === lightboxIndex ? 'w-8 bg-white' : 'w-2 bg-white/30 hover:bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 5. Mesajlar Bölümü */}
       <GuestMessages />
