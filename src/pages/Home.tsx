@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { Heart, MapPin, Clock, Quote } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence, useMotionValueEvent } from 'framer-motion';
 
 import CountdownTimer from '../components/CountdownTimer';
@@ -101,11 +100,11 @@ export default function Home() {
           </motion.div>
 
           <motion.div variants={dateContainer} initial="hidden" animate="visible" className="mt-8 flex items-center gap-3 text-white text-3xl md:text-5xl font-serif font-light tracking-widest border-t border-b border-rose-300/30 py-6">
-            <div className="overflow-hidden relative h-[1.2em] flex items-center"><motion.span variants={slotAnim} className="inline-block relative">31</motion.span></div>
+            <div className="overflow-hidden relative h-[1.2em] flex items-center"><motion.span variants={slotAnim} className="inline-block relative">28</motion.span></div>
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.7 }} className="text-rose-300">•</motion.span>
-            <div className="overflow-hidden relative h-[1.2em] flex items-center"><motion.span variants={slotAnim} className="inline-block relative">08</motion.span></div>
+            <div className="overflow-hidden relative h-[1.2em] flex items-center"><motion.span variants={slotAnim} className="inline-block relative">06</motion.span></div>
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.0 }} className="text-rose-300">•</motion.span>
-            <div className="overflow-hidden relative h-[1.2em] flex items-center"><motion.span variants={slotAnim} className="inline-block relative">2025</motion.span></div>
+            <div className="overflow-hidden relative h-[1.2em] flex items-center"><motion.span variants={slotAnim} className="inline-block relative">2026</motion.span></div>
           </motion.div>
         </div>
 
@@ -134,7 +133,7 @@ export default function Home() {
               <div key={copy} className="flex items-center gap-8 pr-8 shrink-0">
                 {[...Array(10)].map((_, j) => (
                   <span key={j} className="font-mono text-lg md:text-2xl tracking-[0.15em] uppercase font-bold whitespace-nowrap">
-                    31 AĞUSTOS 2025
+                    28 HAZİRAN 2026
                     <span className="mx-4 opacity-50">•</span>
                     TEKİRDAĞ
                     <span className="mx-4 opacity-50">•</span>
@@ -148,11 +147,11 @@ export default function Home() {
         </div>
 
         <div className="max-w-6xl mx-auto px-6 w-full">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Program Kartları: Düğün, Tarih, Konum olarak 3'e düşürüldü */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {[
-              { label: 'DÜĞÜN', time: '19:30', icon: '◈' },
-              { label: 'NİKAH', time: '20:30', icon: '◇' },
-              { label: 'TARİH', time: '31.08.2025', icon: '◉' },
+              { label: 'DÜĞÜN', time: '19:00', icon: '◈' },
+              { label: 'TARİH', time: '28.06.2026', icon: '◉' },
               { label: 'KONUM', time: 'TEKİRDAĞ', icon: '◎' },
             ].map((item) => (
               <motion.div
@@ -172,8 +171,9 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-6">
             <MagneticCard className="h-full overflow-hidden !p-0">
               <div className="relative h-72 w-full">
+                {/* GÜNCELLENDİ: Özel Embed (Yerleştirme) URL'si */}
                 <iframe
-                  src="https://maps.google.com/maps?q=Alt%C4%B1nova%20Mah.%20B%C3%BClb%C3%BCll%C3%BC%20Sk.%20No:10,%20S%C3%BCleymanpa%C5%9Fa%20/%20Tekirda%C4%9F&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                  src="https://maps.google.com/maps?q=Tekiroba%20Düğün%20Salonu,%20Tekirdağ&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   width="100%" 
                   height="100%"
                   style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg)' }}
@@ -184,10 +184,11 @@ export default function Home() {
                 />
               </div>
               <div className="p-6">
-                <p className="text-rose-300 font-mono text-xs tracking-[0.2em] uppercase mb-1">Tekiroba Düğün Salonu</p>
-                <p className="text-neutral-400 font-light text-sm mb-4">Altınova Mah. Bülbüllü Sk. No:10, Süleymanpaşa / Tekirdağ</p>
+                <p className="text-rose-300 font-mono text-xs tracking-[0.2em] uppercase mb-1">Tekiroba Düğün & Davet Salonu</p>
+                <p className="text-neutral-400 font-light text-sm mb-4">Altınova, Bülbüllü Sk No:10, 59100 Süleymanpaşa/Tekirdağ</p>
+                {/* GÜNCELLENDİ: Yol Tarifi için doğrudan Google Maps Arama URL'si */}
                 <a
-                  href="https://www.google.com/maps/dir//Alt%C4%B1nova+Mah.+B%C3%BClb%C3%BCll%C3%BC+Sk.+No:10,+S%C3%BCleymanpa%C5%9Fa+%2F+Tekirda%C4%9F"
+                  href="https://www.google.com/maps/search/?api=1&query=Tekiroba+Düğün+Salonu+Tekirdağ"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-rose-400 font-mono text-xs tracking-widest uppercase hover:text-rose-300 transition-colors group"
@@ -198,30 +199,12 @@ export default function Home() {
               </div>
             </MagneticCard>
 
-            <MagneticCard className="h-full">
+            <MagneticCard className="h-full flex flex-col justify-center items-center text-center p-12">
               <div className="space-y-6">
-                <div>
-                  <p className="text-neutral-600 font-mono text-[9px] tracking-[0.3em] uppercase mb-4">Aileler</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-neutral-400 font-light text-sm leading-relaxed">Sevda - Cengiz</p>
-                      <p className="text-rose-300 font-serif text-lg">İpek</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-neutral-400 font-light text-sm leading-relaxed">Hülya - İsmet</p>
-                      <p className="text-rose-300 font-serif text-lg">Çevik</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="w-full h-[1px] bg-neutral-800" />
-                <div>
-                  <p className="text-neutral-600 font-mono text-[9px] tracking-[0.3em] uppercase mb-3">Alay</p>
-                  <p className="text-neutral-400 font-light text-sm leading-relaxed">Saat 11:00'de Yavuz Mah. Ihlamur Sk. No:2'den kalkacaktır.</p>
-                </div>
-                <div className="w-full h-[1px] bg-neutral-800" />
-                <p className="text-neutral-300 font-serif text-lg leading-relaxed italic">
-                  "Ömür boyu mutluluğa imzalarımızı atarken, sizlerin de yanımızda olmasından büyük mutluluk duyacağız."
+                <p className="text-neutral-300 font-serif text-xl md:text-2xl leading-relaxed italic">
+                  "Hayatımızın en özel gününde, en sevdiklerimizle birlikte bu mutluluğu paylaşmak istiyoruz."
                 </p>
+                <div className="w-12 h-[1px] bg-rose-400/50 mx-auto mt-6" />
               </div>
             </MagneticCard>
           </div>

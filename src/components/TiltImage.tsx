@@ -38,7 +38,14 @@ const TiltImage = ({ src, alt, style, className, disableTilt = false }: TiltImag
       ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => { x.set(0); y.set(0); }}
-      style={{ ...style, rotateX, rotateY, transformStyle: "preserve-3d" }}
+      style={{
+        ...style,
+        ...(disableTilt ? {} : {
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d"
+        })
+      }}
       className={`group relative overflow-hidden rounded-2xl shadow-2xl shadow-black/90 border border-white/5 cursor-pointer ${className}`}
     >
       <img 

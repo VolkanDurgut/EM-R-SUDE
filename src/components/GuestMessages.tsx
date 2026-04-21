@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
@@ -15,7 +15,7 @@ export default function GuestMessages() {
   const [loading, setLoading] = useState(true);
   const [newMsgIds, setNewMsgIds] = useState<Set<string>>(new Set());
   
-  // GÜNCELLEME: İlk yüklenen mesajların ID'lerini takip etmek için state
+  // İlk yüklenen mesajların ID'lerini takip etmek için state
   const [initialMsgIds, setInitialMsgIds] = useState<Set<string>>(new Set());
   
   const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -35,7 +35,7 @@ export default function GuestMessages() {
       } else {
         const fetchedMessages = data || [];
         setMessages(fetchedMessages);
-        // GÜNCELLEME: İlk yüklenenlerin ID'lerini Set olarak kaydet
+        // İlk yüklenenlerin ID'lerini Set olarak kaydet
         setInitialMsgIds(new Set(fetchedMessages.map(m => m.id)));
       }
       setLoading(false);
@@ -71,6 +71,15 @@ export default function GuestMessages() {
     };
   }, []);
 
+  // GÜNCELLEME: initialMsgIds değiştiğinde Map'i bir kez hesapla (O(1) lookup için)
+  const initialIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    Array.from(initialMsgIds).forEach((id, i) => {
+      map.set(id, i);
+    });
+    return map;
+  }, [initialMsgIds]);
+
   if (loading || messages.length === 0) return null;
 
   return (
@@ -92,20 +101,18 @@ export default function GuestMessages() {
             const rotateDeg = rotations[index % rotations.length];
             const isNew = newMsgIds.has(msg.id);
             
-            // GÜNCELLEME: Animasyon delay hesaplama mantığı
-            const isInitial = initialMsgIds.has(msg.id);
-            const initialIndex = isInitial 
-              ? Array.from(initialMsgIds).indexOf(msg.id) 
-              : -1;
+            // GÜNCELLEME: O(1) lookup ile index'i bul
+            const initialIndex = initialIndexMap.get(msg.id) ?? -1;
+            const isInitial = initialIndex !== -1;
 
             return (
               <motion.div
                 key={msg.id}
-                // GÜNCELLEME: Realtime mesaj soldan, ilk yüklenenler aşağıdan gelir
+                // Realtime mesaj soldan, ilk yüklenenler aşağıdan gelir
                 initial={isNew ? { opacity: 0, x: -20 } : { opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, x: 0, y: 0 }}
                 viewport={{ once: true }}
-                // GÜNCELLEME: Sadece ilk yüklenen ilk 9 mesaja kademeli delay ver
+                // Sadece ilk yüklenen ilk 9 mesaja kademeli delay ver
                 transition={{ 
                   delay: isInitial && initialIndex < 9 ? initialIndex * 0.1 : 0, 
                   duration: 0.6 

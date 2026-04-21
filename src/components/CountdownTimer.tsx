@@ -65,7 +65,7 @@ const FlipDigit = ({ digit, isSecondsOnes = false }: { digit: string, isSecondsO
 
 // Hesaplama fonksiyonu bileşen dışına alındı (Tarih güncellendi)
 const calculateTimeLeft = () => {
-  const targetDate = new Date('2025-08-31T19:30:00').getTime();
+  const targetDate = new Date('2026-06-28T19:00:00').getTime();
   const distance = targetDate - new Date().getTime();
   
   if (distance < 0) {
@@ -86,11 +86,11 @@ export default function CountdownTimer() {
   
   const [isWeddingDay, setIsWeddingDay] = useState(() => {
     // İlk yüklemede hedef tarihin geçip geçmediğini kontrol ediyoruz (Tarih güncellendi)
-    return new Date('2025-08-31T19:30:00').getTime() - new Date().getTime() < 0;
+    return new Date('2026-06-28T19:00:00').getTime() - new Date().getTime() < 0;
   });
 
   useEffect(() => {
-    const targetDate = new Date('2025-08-31T19:30:00').getTime(); // Tarih güncellendi
+    const targetDate = new Date('2026-06-28T19:00:00').getTime(); // Tarih güncellendi
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -133,7 +133,7 @@ export default function CountdownTimer() {
         <div className="absolute bottom-0 left-0 w-6 h-6 border-b-[2px] border-l-[2px] border-rose-400/80" />
         <div className="absolute bottom-0 right-0 w-6 h-6 border-b-[2px] border-r-[2px] border-rose-400/80" />
         <p className="text-rose-300/60 font-mono text-xs tracking-[0.4em] uppercase mb-6">
-          31 Ağustos 2025 {/* Metin güncellendi */}
+          28 Haziran 2026 {/* Metin güncellendi */}
         </p>
         <h2 className="text-4xl md:text-6xl font-serif text-white font-light mb-4">
           Bugün Evleniyoruz

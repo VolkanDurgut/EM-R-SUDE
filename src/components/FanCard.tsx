@@ -13,16 +13,21 @@ interface FanCardProps {
 const FanCard = ({ src, alt, index, total, scrollProgress, disableTilt = false }: FanCardProps) => {
   const offset = index - (total - 1) / 2;
   
-  const targetX = `${offset * 28}%`; 
-  const targetY = `${Math.abs(offset) * 6}%`; 
-  const targetRotate = offset * 4; 
+  // Güncelleme — kartlar arasında yeterli boşluk
+  const targetX = `${offset * 55}%`; 
+  const targetY = `${Math.abs(offset) * 5}%`; 
+  const targetRotate = offset * 6; 
   
   const x = useTransform(scrollProgress, [0, 1], ["0%", targetX]);
   const y = useTransform(scrollProgress, [0, 1], ["0%", targetY]);
   const rotate = useTransform(scrollProgress, [0, 1], [0, targetRotate]);
-  const scale = useTransform(scrollProgress, [0, 0.5, 1], [1, 1.05, 1]); 
   
-  const zIndex = Math.floor(30 - Math.abs(offset) * 10);
+  // Güncelleme — merkez kart (offset === 0) için öne çıkma efekti
+  const centerBoost = Math.abs(offset) < 0.5 ? 1.08 : 1;
+  const scale = useTransform(scrollProgress, [0, 0.5, 1], [1, centerBoost, 1]); 
+  
+  // Güncelleme — merkeze yakın kartlar daha önde olsun
+  const zIndex = Math.round(50 - Math.abs(offset) * 8);
 
   return (
     <TiltImage 
