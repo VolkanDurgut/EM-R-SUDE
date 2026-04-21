@@ -36,7 +36,7 @@
 CREATE TABLE IF NOT EXISTS rsvp_responses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   guest_name text NOT NULL,
-  guest_email text NOT NULL,
+  guest_email text, 
   attending boolean DEFAULT true,
   plus_one boolean DEFAULT false,
   plus_one_name text,
@@ -57,11 +57,33 @@ CREATE TABLE IF NOT EXISTS guest_messages (
 ALTER TABLE rsvp_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE guest_messages ENABLE ROW LEVEL SECURITY;
 
+-- E-posta başına tek RSVP zorunlu (Aynı e-posta ile kayıt engellenir)
+-- Not: PostgreSQL'de birden fazla NULL değer UNIQUE kısıtlamasını bozmaz.
+ALTER TABLE rsvp_responses 
+  ADD CONSTRAINT rsvp_responses_email_unique 
+  UNIQUE (guest_email);
+
+-- Opsiyonel olan e-posta alanı eğer doldurulmuşsa doğru formatta olmalıdır
+ALTER TABLE rsvp_responses
+  ADD CONSTRAINT rsvp_email_format_check
+  CHECK (
+    guest_email IS NULL OR
+    guest_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+  );
+
 -- RLS Policies for rsvp_responses
 CREATE POLICY "Anyone can insert RSVP"
   ON rsvp_responses
   FOR INSERT
   TO anon, authenticated
+  WITH CHECK (true);
+
+-- Upsert (Güncelleme) işlemi için UPDATE izni
+CREATE POLICY "Anyone can update their own RSVP"
+  ON rsvp_responses
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
   WITH CHECK (true);
 
 CREATE POLICY "Only admins can view RSVPs"
@@ -71,14 +93,27 @@ CREATE POLICY "Only admins can view RSVPs"
   USING (false);
 
 -- RLS Policies for guest_messages
-CREATE POLICY "Anyone can insert guest messages"
+DROP POLICY IF EXISTS "Anyone can insert guest messages" ON guest_messages;
+
+CREATE POLICY "Rate limited guest message insert"
   ON guest_messages
   FOR INSERT
   TO anon, authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    (
+      SELECT COUNT(*)
+      FROM guest_messages
+      WHERE guest_name = NEW.guest_name
+        AND created_at > NOW() - INTERVAL '60 seconds'
+    ) < 3
+  );
 
 CREATE POLICY "Anyone can view guest messages"
   ON guest_messages
   FOR SELECT
   TO anon, authenticated
   USING (true);
+
+-- GÜNCELLEME: guest_messages tablosunu Supabase Realtime'a ekle
+-- (Supabase Dashboard > Database > Replication ile aynı işlevi görür)
+ALTER PUBLICATION supabase_realtime ADD TABLE guest_messages;
