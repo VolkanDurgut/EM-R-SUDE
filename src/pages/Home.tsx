@@ -399,7 +399,7 @@ export default function Home() {
         </motion.div>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={fadeInUp} className="relative z-10 text-center flex flex-col items-center gap-6">
           <div className="flex items-center gap-4 text-2xl font-serif font-light text-rose-300/80"><span>E</span><div className="w-1 h-1 rounded-full bg-rose-400/50" /><span>S</span></div>
-          <p className="text-neutral-500 text-sm tracking-widest uppercase">Bu site ALLEVENTY ile hazırlanmıştır</p>
+          
         </motion.div>
       </footer>
 
