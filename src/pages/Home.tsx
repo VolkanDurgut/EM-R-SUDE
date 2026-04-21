@@ -32,31 +32,40 @@ interface GallerySlideProps {
 }
 
 const GallerySlide = ({ src, index, total, scrollProgress }: GallerySlideProps) => {
-  const start = index / total;
-  const end = (index + 1) / total;
+  const segmentSize = 1 / total;
+  const segmentStart = index * segmentSize;
+  const segmentEnd = segmentStart + segmentSize;
+  const fadeWindow = segmentSize * 0.3;
 
   const opacity = useTransform(
     scrollProgress,
-    [start - 0.05, start, end - 0.05, end],
+    [segmentStart, segmentStart + fadeWindow, segmentEnd - fadeWindow, segmentEnd],
     [0, 1, 1, 0]
   );
-  
+
   const scale = useTransform(
     scrollProgress,
-    [start, end], 
-    [1.05, 1]
+    [segmentStart, segmentEnd],
+    [1.08, 1.0]
   );
 
+  const isFirst = index === 0;
+
   return (
-    <motion.div style={{ opacity }} className="absolute inset-0">
-      <motion.img 
-        src={src} 
+    <motion.div
+      style={{ opacity: isFirst ? undefined : opacity }}
+      initial={isFirst ? { opacity: 1 } : { opacity: 0 }}
+      className="absolute inset-0 will-change-transform"
+    >
+      <motion.img
+        src={src}
         alt={`Anı ${index + 1}`}
         style={{ scale }}
-        loading={index === 0 ? 'eager' : 'lazy'}
-        className="w-full h-full object-cover" 
+        loading={index <= 1 ? 'eager' : 'lazy'}
+        decoding="async"
+        className="w-full h-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-neutral-950/60" />
+      <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/20 via-transparent to-neutral-950/70" />
     </motion.div>
   );
 };
@@ -74,15 +83,13 @@ export default function Home() {
   const galleryRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: galleryScroll } = useScroll({
     target: galleryRef,
-    offset: ["start end", "end start"]
+    offset: ["start start", "end end"]
   });
 
-  // GÜNCELLENDİ: Yeni tam ekran mantığına uygun aktif kart hesaplaması
   useMotionValueEvent(galleryScroll, "change", (latest) => {
-    const active = Math.min(
-      GALLERY_IMAGES.length,
-      Math.max(1, Math.ceil(latest * GALLERY_IMAGES.length))
-    );
+    const segmentSize = 1 / GALLERY_IMAGES.length;
+    const rawIndex = Math.floor(latest / segmentSize);
+    const active = Math.min(GALLERY_IMAGES.length, Math.max(1, rawIndex + 1));
     setActiveCard(active);
   });
 
@@ -242,61 +249,80 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. YENİ: FULLSCREEN SCROLL-SNAP GALERİ */}
+      {/* 4. FULLSCREEN SCROLL-DRIVEN GALERİ */}
       <section
         ref={galleryRef}
         className="relative w-full"
-        style={{ height: `${GALLERY_IMAGES.length * 100}vh` }}
+        style={{ height: `${GALLERY_IMAGES.length * 120}vh` }}
       >
-        <div className="sticky top-0 h-screen overflow-hidden">
-          
-          {/* Her fotoğraf scroll progress'e göre fade ve scale geçişi yapar */}
+        <div className="sticky top-0 h-screen overflow-hidden bg-neutral-950">
+
           {GALLERY_IMAGES.map((src, i) => (
-            <GallerySlide 
-              key={src} 
-              src={src} 
-              index={i} 
-              total={GALLERY_IMAGES.length} 
-              scrollProgress={galleryScroll} 
+            <GallerySlide
+              key={src}
+              src={src}
+              index={i}
+              total={GALLERY_IMAGES.length}
+              scrollProgress={galleryScroll}
             />
           ))}
 
-          {/* Sayaç — sağ alt */}
-          <div className="absolute bottom-8 right-8 z-20 flex items-center gap-3">
-            <AnimatePresence mode="popLayout">
-              <motion.span
-                key={activeCard}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="text-white font-serif text-5xl font-light"
-              >
-                {String(activeCard).padStart(2, '0')}
-              </motion.span>
-            </AnimatePresence>
-            <span className="text-white/40 font-mono text-sm">
-              / {String(GALLERY_IMAGES.length).padStart(2, '0')}
-            </span>
-          </div>
-
-          {/* "ANILAR" dikey metin — sol */}
-          <p 
+          {/* Sol: Dikey ANILAR metni */}
+          <p
             style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
-            className="absolute left-6 top-1/2 -translate-y-1/2 z-20 text-white/30 font-mono text-xs tracking-[0.5em] uppercase"
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-30 text-white/30 font-mono text-xs tracking-[0.5em] uppercase"
           >
             ANILAR
           </p>
 
-          {/* Progress çubukları — alt orta */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+          {/* Sağ alt: Büyük sayaç */}
+          <div className="absolute bottom-8 right-8 z-30 flex items-baseline gap-2">
+            <AnimatePresence mode="popLayout">
+              <motion.span
+                key={activeCard}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.3 }}
+                className="text-white font-serif text-6xl md:text-8xl font-light leading-none"
+              >
+                {String(activeCard).padStart(2, '0')}
+              </motion.span>
+            </AnimatePresence>
+            <span className="text-white/30 font-mono text-base mb-2">
+              /{String(GALLERY_IMAGES.length).padStart(2, '0')}
+            </span>
+          </div>
+
+          {/* Alt orta: Progress bar'lar */}
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
             {GALLERY_IMAGES.map((_, i) => (
-              <div
+              <motion.div
                 key={i}
-                className={`h-[2px] transition-all duration-500 rounded-full ${
-                  i + 1 === activeCard ? 'w-8 bg-white' : 'w-2 bg-white/30'
-                }`}
+                animate={{
+                  width: i + 1 === activeCard ? 32 : 8,
+                  opacity: i + 1 === activeCard ? 1 : 0.3,
+                }}
+                transition={{ duration: 0.4 }}
+                className="h-[2px] bg-white rounded-full"
               />
             ))}
+          </div>
+
+          {/* Üst orta: Fotoğraf numarası etiketi */}
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-30">
+            <AnimatePresence mode="popLayout">
+              <motion.p
+                key={activeCard}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.3 }}
+                className="text-white/40 font-mono text-xs tracking-[0.4em] uppercase"
+              >
+                ANI {String(activeCard).padStart(2, '0')}
+              </motion.p>
+            </AnimatePresence>
           </div>
 
         </div>
