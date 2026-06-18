@@ -217,7 +217,7 @@ export default function Home() {
             <MagneticCard className="h-full flex flex-col justify-center items-center text-center p-12">
               <div className="space-y-6">
                 <p className="text-neutral-300 font-serif text-xl md:text-2xl leading-relaxed italic">
-                  "Hayatımızın en özel gününde, en sevdiklerimizle birlikte bu mutluluğu paylaşmak istiyoruz."
+                  "Hayatımızın en güzel gününde seni de aramızda görmek dileğiyle…🤍✨"
                 </p>
                 <div className="w-12 h-[1px] bg-rose-400/50 mx-auto mt-6" />
               </div>
