@@ -76,10 +76,7 @@ export default function RSVPModal({ isOpen, onClose }: RSVPModalProps) {
       
       const { error } = await supabase
         .from('rsvp_responses')
-        .upsert(
-          [finalData], 
-          { onConflict: 'guest_email' }
-        );
+        .insert([finalData]);
 
       if (error) throw error;
 
